@@ -17,12 +17,16 @@ class SatPosition:
           #offset_el=0.028374441899998715-0.0316 # since 1710
 
 def usage():
-   print "python satelliteMapSchedule scheduleName"
+   print "python satelliteMapSchedule scheduleName scanning direction"
    
   
 
 def main(arg):
 
+   if arg[2] not in ['az','el']:
+      print "Scanning direction must be el or az"
+      return 
+   
    sat_name="EUTELSAT_7A"
    
    config_file=open('config.txt')
@@ -40,7 +44,7 @@ def main(arg):
    
    #filename="map_65x64_161216_1555"
    filename=arg[1]
-   
+   direction=arg[2]
    
    filescd = open(filename+".scd","w")
    filelis = open(filename+".lis","w")
@@ -139,9 +143,17 @@ def main(arg):
         offset_el_i=bottom+i * step
         j=j+1
         lst_actual=observer.sidereal_time()
-        
-        filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
-        filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,offset_el_i))
+        if direction=='az':
+            
+           filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
+           filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,offset_el_i))
+           print size
+        else:
+           filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
+           filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t0.000d\t%6.3fd\tHOR\tHOR\tLON\tCEN\tINC\t%6.3f\t-HOROFFS\t%8.4fd\t0.0000d\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,offset_el_i))
+           print size
+           
+            
         observer.date += (time +timestep) *ephem.second
    
         j=j+1
@@ -156,7 +168,7 @@ def main(arg):
    print observer.date
 
 if __name__ == "__main__": 
-    if len(sys.argv) > 1:  	
+    if len(sys.argv) > 2:  	
        main(sys.argv)
     else:
        usage()
