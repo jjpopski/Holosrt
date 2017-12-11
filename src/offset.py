@@ -19,8 +19,8 @@ from scipy import asarray as ar,exp
     #satellite=ephem.readtle(tle[0],tle[1],tle[2])
     
 
-def usage():
-   print "python satelliteMapSchedule scheduleName scanning direction"
+def usage(arg):
+   print "python " +arg[0] +"mergedfile"
 
 
 def gaus(x, a, x0, sigma,c0):
@@ -32,7 +32,11 @@ def gaus(x, a, x0, sigma,c0):
 
 def main(arg):
 
-     
+     config_file=open('config.txt')
+     config_parameters=config_file.readlines()
+      
+     offset_az=float(config_parameters[3])  # since 1710
+     offset_el=float(config_parameters[4]) # since 1710
      name = arg[1] # show an "Open" dialog box and return the path to the selected file
      print name
      
@@ -54,22 +58,30 @@ def main(arg):
 
      
      azimuth_scan_az=my_data[az_scan_id_min:az_scan_id_max,0]
+     minaz=min(azimuth_scan_az)
+     maxaz=max(azimuth_scan_az)
+     averaz=(minaz+maxaz)/2.
      azimuth_scan_amplitude=my_data[az_scan_id_min:az_scan_id_max,2]
      azimuth_commanded=np.mean(my_data[el_scan_id_min:el_scan_id_max,0])
      
      elevation_scan_az=my_data[el_scan_id_min:el_scan_id_max,1]
+     averel=(max(elevation_scan_az)+min(elevation_scan_az))/2.
+     
      elevation_scan_amplitude=my_data[el_scan_id_min:el_scan_id_max,2]
      elevation_commanded=np.mean(my_data[az_scan_id_min:az_scan_id_max,1])   
      
-     popt_az,pcov = curve_fit(gaus,azimuth_scan_az,azimuth_scan_amplitude,p0=[500000,183.,.2,10.])
-     popt_el,pcov = curve_fit(gaus,elevation_scan_az,elevation_scan_amplitude,p0=[500000,44.5,.2,10.])
-
+     popt_az,pcov = curve_fit(gaus,azimuth_scan_az,azimuth_scan_amplitude,p0=[500000,averaz,.2,10.])
+     popt_el,pcov = curve_fit(gaus,elevation_scan_az,elevation_scan_amplitude,p0=[500000,44.4,.2,10.])
+     fit_offset_az= azimuth_commanded-popt_az[1]
+     fit_offset_el= elevation_commanded-popt_el[1]
      #min_sample=0
      #max_sample=6000
      print 'AZ peak:',popt_az[1], azimuth_commanded-popt_az[1] 
      print 'El peak:',popt_el[1], elevation_commanded-popt_el[1],elevation_commanded
-     
-     
+     print ("OLD Offset Parameters AZ:",offset_az)    
+     print ("OLD Offset Parameters EL:",offset_el) 
+     print ("New Offset Parameters AZ:",offset_az+fit_offset_az)    
+     print ("New Offset Parameters EL:",offset_el+fit_offset_el) 
      
      p.figure(1)
      p.plot(my_data[az_scan_id_min:az_scan_id_max,0],my_data[az_scan_id_min:az_scan_id_max,2],'.')
@@ -96,5 +108,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:  	
        main(sys.argv)
     else:
-       usage()
+       usage(sys.argv)
 

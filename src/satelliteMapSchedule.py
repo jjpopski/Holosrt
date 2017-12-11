@@ -17,7 +17,7 @@ class SatPosition:
           #offset_el=0.028374441899998715-0.0316 # since 1710
 
 def usage():
-   print "python satelliteMapSchedule scheduleName scanning direction"
+   print "python satelliteMapSchedule scheduleName scanning_direction size"
    
   
 
@@ -26,7 +26,13 @@ def main(arg):
    if arg[2] not in ['az','el']:
       print "Scanning direction must be el or az"
       return 
-   
+   print len(arg)
+   if len(arg)==4:
+          size_init=float(arg[3])
+          
+   else:
+          size_init=0.74*2 #degrees 33beam  
+
    sat_name="EUTELSAT_7A"
    
    config_file=open('config.txt')
@@ -79,7 +85,7 @@ def main(arg):
    observer.date=ephem.now()+5*ephem.minute
    print observer.date
    
-   beam=0.028
+   beam=0.02323
    
    
    sidereal_time=observer.sidereal_time()
@@ -90,9 +96,10 @@ def main(arg):
    #size=1.4336  #degrees  
    
    
-   size_init=0.74*2 #degrees 33beam  
+  # size_init=0.74*2 #degrees 33beam  
    
-   step=0.0224
+   step=0.0179
+
    size=size_init
    print size
    
