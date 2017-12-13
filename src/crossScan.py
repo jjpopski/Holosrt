@@ -45,17 +45,44 @@ def main(arg):
    
    filescd = open(filename+".scd","w")
    filelis = open(filename+".lis","w")
+   filecfg = open(filename+".cfg","w")
+   filebck = open(filename+".bck","w")
+   
    filenamelis=filename+'.lis'
+   filenamebck=filename+'.bck'
+   filenamecfg=filename+'.cfg'
+   
    filescd.write("PROJECT:\tHolography\n")
    filescd.write("OBSERVER:\tSP_GS\n")
    filescd.write("SCANLIST:\t%s\n" % filenamelis)
-   filescd.write("BACKENDLIST:\teutelsat_azmap.bck\n")
-   filescd.write("PROCEDURELIST:\teutelsat_azmap.cfg\n")
+   filescd.write("BACKENDLIST:\t%s\n" %filenamebck )
+   filescd.write("PROCEDURELIST:\t%s\n" %filenamecfg)
    filescd.write("MODE:\tSEQ\n")
    filescd.write("SCANTAG:\t1\n")
    filescd.write("INITPROC:\tNULL\n\n")
    filescd.write("SC:\t1\tEUTELSATAZMAP\tTP:MANAGEMENT/FitsZilla\n")
    
+   filecfg.write("PROC_INIT{\n")
+   filecfg.write("\tnop\n")
+   filecfg.write("}\n")
+   filecfg.write("PROC_NULL{\n")
+   filecfg.write("}\n")
+   filecfg.write("PROC_TSYS{\n")
+   filecfg.write("\twait=2.000000\n")
+   filecfg.write("\tsys\n")
+   filecfg.write("\twait=1\n")
+   filecfg.write("}\n")
+   
+   filebck.write("TP:BACKENDS/TotalPower{\n")
+   filebck.write("\tsetSection=0,*,300.000000,*,*,0.000100,*\n")
+   filebck.write("\tsetSection=1,*,300.000000,*,*,0.000100,*\n")
+   filebck.write("\tintegration=40\n")
+   filebck.write("\tenable=1;1;0;0;0;0;0;0;0;0;0;0;0;0\n")
+   filebck.write("}\n")
+   
+
+
+
    #line1='EUTELSAT 7A'             
    #line2='1 28187U 04008A   16340.05224449  .00000056  00000-0  00000+0 0  9992'
    #line3='2 28187   0.0633 352.2572 0005282 249.6501 218.2032  1.00272184 46676'
@@ -85,13 +112,19 @@ def main(arg):
    sat_el= degrees(float(w3a.alt))+offset_el
    sat_az= degrees(float(w3a.az))+offset_az
    j=1;
+
+   #2	SIDEREAL	Tsys	HOR	183.3590d	44.2982d	-HOROFFS	0.0000d	-0.3300d	-RVEL	0.000000	BARY	OP
    
    #size=1.4336  #degrees  
-   filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
-   filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,0.0))
+   filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_TSYS\tTP:MANAGEMENT/FitsZilla\n" % (j,0,j))
+   filelis.write("%d\tSIDEREAL\tTSYS\tHOR\t%7.4fd\t%7.4fd\t-HOROFFS\t0.0000d\t-0.3300d\t-RVEL\t0.000000\tBARY\tOP\n" % (j,sat_az,sat_el))
    j=j+1
    filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
    filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t0.000d\t%6.3fd\tHOR\tHOR\tLON\tCEN\tINC\t%6.3f\t-HOROFFS\t%8.4fd\t0.0000d\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,0.0))
+
+   j=j+1
+   filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
+   filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,0.0))
 
 def usage():
    print "python crossScan.py  size"

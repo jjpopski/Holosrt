@@ -30,8 +30,8 @@ def scanDir(path,ext='*.fits'):
       filelist=[]
       rootdir=path
       for i in locate(ext,path):
-	  if 'summary' not in i:     
-	    filelist.append(i)
+          if 'summary' not in i:     
+            filelist.append(i)
       return filelist            
 
 chmap={'Ch0':0,'Ch1':1,'Ch2':2,'Ch3':3,'Ch4':4,'Ch5':5,'Ch6':6}
@@ -61,7 +61,7 @@ class Beamspectra:
        return self.x_offset,self.y_offset
    
    def getskyoffset(self):
-	   
+           
       return self.x_offset+self.raoff,self.y_offset+self.decoff
 
    def getskyoffsetarcsec(self):
@@ -82,8 +82,8 @@ class Beamspectra:
         return np.degrees(self.data_az),np.degrees(self.data_el)
    
    def getTime(self):
-	
-	return self.data_time
+        
+        return self.data_time
 
 
 
@@ -100,145 +100,155 @@ def extract_azel(name_scan):
    els=np.array([],dtype=float)
    f_coordinates=open(fileou,'w')
    for name in files:
-   	    hdulist = fits.open(name)
+            hdulist = fits.open(name)
             sp=Beamspectra(hdulist,'Ch0')
             az,el=sp.getAzEl()
             time=sp.getTime()
-            p.plot(time,el) 
             for i,val in enumerate(time):
                f_coordinates.write("%s %7.4f %7.4f\n" % (Time(val,format='mjd').iso,az[i],el[i]))
                
-   				
+                                   
             
    print Time(time,format='mjd').iso
    f_coordinates.close()
- 
 
-#my_data = np.genfromtxt('coordinates.txt', delimiter='\t',skip_header=1,dtype=float)
-
-
-#coo_file=open('20161021-101330-Holography-EUTELSATAZMAPcoordinates.txt')
-#data_file=open('holo_20161021_101240')
-scan_name = askdirectory(title='Fits Scan directory') # show an "Open" dialog box and return the path to the selected file
-name_datafile=askopenfilename(title='Data File')
-data_file=open(name_datafile)
-
-extract_azel(scan_name)
-coo_file=open('temp_azel.txt')
-fileou_name=name_datafile+'_merged'
-
-
-
-data=[]
-time=[]
-az=[]
-el=[]
-
-time_data=[]
-tuttalinea=[]
-
-for line in coo_file:
-	
-	split=line.split()
-	data.append(split[0])
-        timedata='%s %s' % (split[0],split[1])
-        time.append(timedata)
-        
-	az.append(split[2])
-	el.append(split[3])
-        
-
-
-
-times_coo=Time(time,format='iso')
-	
-for line in data_file:
-	if line[0] =='#' or line[0]=='A':
-		continue
-	
-	split=line.strip().split()
-	data_time_dati=split[11]+' '+split[12]
-	times_data=Time(data_time_dati,format='iso')
-	time_data.append(times_data)
-        tuttalinea.append(line.strip())
- 	
-
-
-
-#time_data
-#time_coo
-i=0;
-fileou=open(fileou_name,'w')
-
-aligned=False
-
-
-#occorre invertire il ciclo for
-#scorrerlo sui dati Per ogni dato una coordinata di az el.
-#se supera 
-
-	   
-	   
-
-
-
-max_coo=len(times_coo)
-for idx,timestamp_data in enumerate(time_data[:-1]):
-     
-     delta1=timestamp_data-times_coo[i]
-      
-  #        if (timestamp_data < times_coo[i]) and aligned==False:
-
-     if (timestamp_data < times_coo[i]) and (abs(delta1.sec)>0.041)  :
-             print 'aaa'
-	     continue
-     
-     if aligned == False and (timestamp_data >= times_coo[i]):
-	     aligned==True
-	     
-     while (timestamp_data > times_coo[i]):
- 	     i=i+1
-             if i==max_coo:
-		  break
-     
-     
-     
-     if i==max_coo:
-		  break
-     delta=timestamp_data-times_coo[i]
-     if (abs(delta.sec)<0.041):
-	     fileou.write("%s %s %s\n" %(az[i],el[i],tuttalinea[idx][30:]))
-	     print (az[i],el[i],timestamp_data.iso,times_coo[i].iso,delta.sec)
-
-             continue
-     #elif aligned == True and (timestamp_data < times_coo[i]):
-	     #aligned == False
-	     
-     
-     #else:
-	     #aligned=True
+def main(argv): 
+   
+   #my_data = np.genfromtxt('coordinates.txt', delimiter='\t',skip_header=1,dtype=float)
+   
+   
+   #coo_file=open('20161021-101330-Holography-EUTELSATAZMAPcoordinates.txt')
+   #data_file=open('holo_20161021_101240')
+   scan_name = askdirectory(title='Fits Scan directory') # show an "Open" dialog box and return the path to the selected file
+   name_datafile=askopenfilename(title='Data File')
+   #scan_name=argv[1]
+   #name_datafile=argv[2]
+   print scan_name,name_datafile
+   data_file=open(name_datafile)
+   
+   extract_azel(scan_name)
+   coo_file=open('temp_azel.txt')
+   fileou_name=name_datafile+'_merged'
+   
+   
+   
+   data=[]
+   time=[]
+   az=[]
+   el=[]
+   
+   time_data=[]
+   tuttalinea=[]
+   
+   for line in coo_file:
            
+           split=line.split()
+           data.append(split[0])
+           timedata='%s %s' % (split[0],split[1])
+           time.append(timedata)
+           
+           az.append(split[2])
+           el.append(split[3])
+           
+   
+   
+   
+   times_coo=Time(time,format='iso')
+           
+   for line in data_file:
+           if line[0] =='#' or line[0]=='A':
+                   continue
+           
+           split=line.strip().split()
+           data_time_dati=split[11]+' '+split[12]
+           times_data=Time(data_time_dati,format='iso')
+           time_data.append(times_data)
+           tuttalinea.append(line.strip())
+            
+   
+   
+   
+   #time_data
+   #time_coo
+   i=0;
+   fileou=open(fileou_name,'w')
+   
+   aligned=False
+   
+   
+   #occorre invertire il ciclo for
+   #scorrerlo sui dati Per ogni dato una coordinata di az el.
+   #se supera 
+   
+              
+              
+   
+   
+   
+   max_coo=len(times_coo)
+   for idx,timestamp_data in enumerate(time_data[:-1]):
+        
+        delta1=timestamp_data-times_coo[i]
+         
+     #        if (timestamp_data < times_coo[i]) and aligned==False:
+   
+        if (timestamp_data < times_coo[i]) and (abs(delta1.sec)>0.041)  :
+                print 'aaa'
+                continue
+        
+        if aligned == False and (timestamp_data >= times_coo[i]):
+                aligned==True
+                
+        while (timestamp_data > times_coo[i]):
+                i=i+1
+                if i==max_coo:
+                     break
+        
+        
+        
+        if i==max_coo:
+                     break
+        delta=timestamp_data-times_coo[i]
+        if (abs(delta.sec)<0.041):
+                fileou.write("%s %s %s\n" %(az[i],el[i],tuttalinea[idx][30:]))
+                print (az[i],el[i],timestamp_data.iso,times_coo[i].iso,delta.sec)
+   
+                continue
+        #elif aligned == True and (timestamp_data < times_coo[i]):
+                #aligned == False
+                
+        
+        #else:
+                #aligned=True
+              
+       
+                
+   #p.plot(az)
+   #p.show()
     
-	     
-p.plot(az)
-p.show()
- 
-
-#for timestamp in times_data:
-	
-   #for idx,val in enumerate(times_coo):
-     #tt=val-timestamp
-     #if tt.sec < 0.2:
-	     #print val,timestamp
-      
-	   
-	
-#tau_list=[ idx  for idx, val in enumerate(time_tau) if val > timestamp]
-#       tau=my_data[tau_list[0],2]
-
-
-#print time
-
-
-       
-       
+   
+   #for timestamp in times_data:
+           
+      #for idx,val in enumerate(times_coo):
+        #tt=val-timestamp
+        #if tt.sec < 0.2:
+                #print val,timestamp
+         
+              
+           
+   #tau_list=[ idx  for idx, val in enumerate(time_tau) if val > timestamp]
+   #       tau=my_data[tau_list[0],2]
+   
+   
+   #print time
+   
+def usage(arg): 
+     print "python "+argv[0] +"fits_directory holography_file"
+     
+if __name__ == "__main__": 
+    if len(sys.argv) > 2:  	
+       main(sys.argv)
+    else:
+       main(sys.argv)
+         
+          
