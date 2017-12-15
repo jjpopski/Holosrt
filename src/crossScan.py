@@ -69,7 +69,7 @@ def main(arg):
    filecfg.write("}\n")
    filecfg.write("PROC_TSYS{\n")
    filecfg.write("\twait=2.000000\n")
-   filecfg.write("\tsys\n")
+   filecfg.write("\ttsys\n")
    filecfg.write("\twait=1\n")
    filecfg.write("}\n")
    
