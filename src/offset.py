@@ -50,12 +50,14 @@ def main(arg):
      min_sample=0
      max_sample=len(my_data[:,0])
      
-     el_scan_id_min=10
-     el_scan_id_max=max_sample/2-10
+     el_scan_id_min=30
+     el_scan_id_max=max_sample/2-30
      
      az_scan_id_min=max_sample/2+10
-     az_scan_id_max=max_sample
-
+     az_scan_id_max=max_sample-10
+     
+     print 'elevation',max_sample,el_scan_id_min,el_scan_id_max
+     print 'az',max_sample,az_scan_id_min,az_scan_id_max
      
      azimuth_scan_az=my_data[az_scan_id_min:az_scan_id_max,0]
      minaz=min(azimuth_scan_az)
@@ -67,11 +69,18 @@ def main(arg):
      elevation_scan_az=my_data[el_scan_id_min:el_scan_id_max,1]
      averel=(max(elevation_scan_az)+min(elevation_scan_az))/2.
      
+     
+     
      elevation_scan_amplitude=my_data[el_scan_id_min:el_scan_id_max,2]
      elevation_commanded=np.mean(my_data[az_scan_id_min:az_scan_id_max,1])   
      
-     popt_az,pcov = curve_fit(gaus,azimuth_scan_az,azimuth_scan_amplitude,p0=[500000,averaz,.2,10.])
-     popt_el,pcov = curve_fit(gaus,elevation_scan_az,elevation_scan_amplitude,p0=[500000,44.4,.2,10.])
+     print averel
+     popt_az,pcov = curve_fit(gaus,azimuth_scan_az,azimuth_scan_amplitude,p0=[500000,averaz,.2,10.],bounds=(0, [1e6, 360., 1.,1e3]))
+     popt_el,pcov = curve_fit(gaus,elevation_scan_az,elevation_scan_amplitude,p0=[500000,averel,.2,30.],maxfev=6000,bounds=(0, [1e6, 360., 1.,1e3]))
+     print popt_el
+     print popt_az
+     p.plot(elevation_scan_az,elevation_scan_amplitude)
+     p.show(block=False)
      fit_offset_az= azimuth_commanded-popt_az[1]
      fit_offset_el= elevation_commanded-popt_el[1]
      #min_sample=0
@@ -101,8 +110,9 @@ def main(arg):
      p.draw()
      
      
-     p.show()
-
+     p.show(block=False)
+     exit_plot=raw_input('Press return to exit! ')
+     
 
 if __name__ == "__main__": 
     if len(sys.argv) > 1:  	
