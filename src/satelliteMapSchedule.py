@@ -1,7 +1,7 @@
 import ephem
 from math import degrees
 import sys
-
+import argparse
 class SatPosition:
    
     def __init__(self,observer,tle):
@@ -17,31 +17,32 @@ class SatPosition:
           #offset_el=0.028374441899998715-0.0316 # since 1710
 
 def usage():
-   print "python satelliteMapSchedule scheduleName scanning_direction size"
+   print ("python satelliteMapSchedule scheduleName scanning_direction size")
    
   
 
 def main(arg):
+   parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+   parser.add_argument("name",help="Schedule Name",type=str)
+   parser.add_argument("scanlength",nargs='?',default=0.74*2,help="scan length",type=float)
+   parser.add_argument("-d","--direction",type = lambda s : s.lower(),choices=['el','az'],default='az',help='Scanning direction')
+   parser.add_argument("-c","--config", help="config file",default='config.txt')
 
-   if arg[2] not in ['az','el']:
-      print "Scanning direction must be el or az"
-      return 
-   print len(arg)
-   if len(arg)==4:
-          size_init=float(arg[3])
-          
-   else:
-          size_init=0.74*2 #degrees 33beam  
-
-   sat_name="EUTELSAT_7A"
+   args = parser.parse_args()
+   direction=args.direction
+   size_init=args.scanlength
    
-   config_file=open('config.txt')
+   
+   config_file=open(args.config)
    config_parameters=config_file.readlines()
    line1=config_parameters[0]
    line2=config_parameters[1]
    line3=config_parameters[2]
    offset_az=-float(config_parameters[3])  # since 1710
    offset_el=-float(config_parameters[4]) # since 1710
+   filename=str(args.name)
+   sat_name=line1
+
    
    
    
@@ -49,21 +50,48 @@ def main(arg):
    #offset_el=-(0.02037299999999931-0.011299999999999998)
    
    #filename="map_65x64_161216_1555"
-   filename=arg[1]
-   direction=arg[2]
    
    filescd = open(filename+".scd","w")
-   filelis = open(filename+".lis","w")
+
    filenamelis=filename+'.lis'
+   filenamebck=filename+'.bck'
+   filenamecfg=filename+'.cfg'
+
+   filelis = open(filenamelis,"w")
+   filecfg = open(filenamecfg,"w")
+   filebck = open(filenamebck,"w")
+
+   
+   
+   
+   
    filescd.write("PROJECT:\tHolography\n")
    filescd.write("OBSERVER:\tSP_GS\n")
    filescd.write("SCANLIST:\t%s\n" % filenamelis)
-   filescd.write("BACKENDLIST:\teutelsat_azmap.bck\n")
-   filescd.write("PROCEDURELIST:\teutelsat_azmap.cfg\n")
+   filescd.write("BACKENDLIST:\t%s\n" %filenamebck )
+   filescd.write("PROCEDURELIST:\t%s\n" %filenamecfg)
    filescd.write("MODE:\tSEQ\n")
    filescd.write("SCANTAG:\t1\n")
    filescd.write("INITPROC:\tNULL\n\n")
-   filescd.write("SC:\t1\tEUTELSATAZMAP\tTP:MANAGEMENT/FitsZilla\n")
+   filescd.write("SC:\t1\t%s%sMAP\tTP:MANAGEMENT/FitsZilla\n" %(sat_name,direction.upper()))
+   
+   filecfg.write("PROC_INIT{\n")
+   filecfg.write("\tnop\n")
+   filecfg.write("}\n")
+   filecfg.write("PROC_NULL{\n")
+   filecfg.write("}\n")
+   filecfg.write("PROC_TSYS{\n")
+   filecfg.write("\twait=2.000000\n")
+   filecfg.write("\ttsys\n")
+   filecfg.write("\twait=1\n")
+   filecfg.write("}\n")
+   
+   filebck.write("TP:BACKENDS/TotalPower{\n")
+   filebck.write("\tsetSection=0,*,300.000000,*,*,0.000100,*\n")
+   filebck.write("\tsetSection=1,*,300.000000,*,*,0.000100,*\n")
+   filebck.write("\tintegration=40\n")
+   filebck.write("\tenable=1;1;0;0;0;0;0;0;0;0;0;0;0;0\n")
+   filebck.write("}\n")
    
    #line1='EUTELSAT 7A'             
    #line2='1 28187U 04008A   16340.05224449  .00000056  00000-0  00000+0 0  9992'
@@ -130,13 +158,13 @@ def main(arg):
    lst_actual=observer.sidereal_time()
    j=j+1
    filescd.write("1_%d\t%6.2f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" %(j,tcalib,j))
-   filelis.write("%d\tSIDEREAL\tEUTELSATMAP\tHOR\t%6.3fd\t%6.3fd\n" %(j,sat_az,sat_el))
+   filelis.write("%d\tSIDEREAL\t%sMAP\tHOR\t%6.3fd\t%6.3fd\n" %(j,sat_name,sat_az,sat_el))
    observer.date += (tcalib +timestep) *ephem.second
    
    lst_actual=observer.sidereal_time()
    j=j+1
    filescd.write("1_%d\t%6.2f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" %(j,tcalib,j))
-   filelis.write("%d\tSIDEREAL\tEUTELSATMAP\tHOR\t%6.3fd\t%6.3fd\n" %(j,sat_az,sat_el))
+   filelis.write("%d\tSIDEREAL\t%s\tHOR\t%6.3fd\t%6.3fd\n" %(j,sat_name,sat_az,sat_el))
    observer.date += (tcalib +timestep) *ephem.second
    
    #-HOROFFS	0.0000d	0.0000d	-RVEL	0.000000	BARY	OP
@@ -153,12 +181,12 @@ def main(arg):
         if direction=='az':
             
            filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
-           filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,offset_el_i))
-           print size
+           filelis.write("%d\tOTF\t%sMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_name,sat_az,sat_el,size,time,offset_el_i))
+           print(size)
         else:
            filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
-           filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t0.000d\t%6.3fd\tHOR\tHOR\tLON\tCEN\tINC\t%6.3f\t-HOROFFS\t%8.4fd\t0.0000d\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,offset_el_i))
-           print size
+           filelis.write("%d\tOTF\t%sMAP\t%7.4fd\t%7.4fd\t0.000d\t%6.3fd\tHOR\tHOR\tLON\tCEN\tINC\t%6.3f\t-HOROFFS\t%8.4fd\t0.0000d\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_name,sat_az,sat_el,size,time,offset_el_i))
+           print(size)
            
             
         observer.date += (time +timestep) *ephem.second
@@ -166,7 +194,7 @@ def main(arg):
         j=j+1
         lst_actual=observer.sidereal_time()
         filescd.write("1_%d\t%6.2f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" %(j,tcalib,j))
-        filelis.write("%d\tSIDEREAL\tEUTELSATMAP\tHOR\t%7.4fd\t%7.4fd\n" %(j,sat_az,sat_el))
+        filelis.write("%d\tSIDEREAL\t%sMAP\tHOR\t%7.4fd\t%7.4fd\n" %(j,sat_name,sat_az,sat_el))
    #        observer.date += (tcalib +timestep) *ephem.second
         observer.date += (tcalib +timestep) *ephem.second
    
@@ -175,10 +203,8 @@ def main(arg):
    print observer.date
 
 if __name__ == "__main__": 
-    if len(sys.argv) > 2:  	
-       main(sys.argv)
-    else:
-       usage()
+    main(sys.argv)
+
 
     
     

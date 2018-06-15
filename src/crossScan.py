@@ -1,6 +1,7 @@
 import ephem
 from math import degrees
 import sys
+import argparse
 
 class SatPosition:
    
@@ -22,11 +23,16 @@ def usage():
   
 
 def main(arg):
-   size=float(arg[2])
+   parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+   parser.add_argument("schedulename",help="Schedule Name",type=str)
+   parser.add_argument("scanlength",help="scan length",type=float)
+   parser.add_argument("-c","--config", help="config file",default='config.txt')
 
-   sat_name="EUTELSAT_7A"
+   args = parser.parse_args()
+
+   size=args.scanlength 
    
-   config_file=open('config.txt')
+   config_file=open(args.config)
    config_parameters=config_file.readlines()
    line1=config_parameters[0]
    line2=config_parameters[1]
@@ -34,14 +40,15 @@ def main(arg):
    offset_az=-float(config_parameters[3])  # since 1710
    offset_el=-float(config_parameters[4]) # since 1710
    
+   sat_name=line1
+   
    
    
    #offset_az=-(0.3042560000000094)
    #offset_el=-(0.02037299999999931-0.011299999999999998)
    
    #filename="map_65x64_161216_1555"
-   filename=arg[1]
-   direction=arg[2]
+   filename=args.schedulename
    
    filescd = open(filename+".scd","w")
    filelis = open(filename+".lis","w")
@@ -60,8 +67,8 @@ def main(arg):
    filescd.write("MODE:\tSEQ\n")
    filescd.write("SCANTAG:\t1\n")
    filescd.write("INITPROC:\tNULL\n\n")
-   filescd.write("SC:\t1\tEUTELSATAZMAP\tTP:MANAGEMENT/FitsZilla\n")
-   
+   filescd.write("SC:\t1\t%sCROSS\tTP:MANAGEMENT/FitsZilla\n" %sat_name)
+      
    filecfg.write("PROC_INIT{\n")
    filecfg.write("\tnop\n")
    filecfg.write("}\n")
@@ -120,18 +127,16 @@ def main(arg):
    filelis.write("%d\tSIDEREAL\tTSYS\tHOR\t%7.4fd\t%7.4fd\t-HOROFFS\t0.0000d\t-0.3300d\t-RVEL\t0.000000\tBARY\tOP\n" % (j,sat_az,sat_el))
    j=j+1
    filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
-   filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t0.000d\t%6.3fd\tHOR\tHOR\tLON\tCEN\tINC\t%6.3f\t-HOROFFS\t%8.4fd\t0.0000d\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,0.0))
+   filelis.write("%d\tOTF\t%sCROSS\t%7.4fd\t%7.4fd\t0.000d\t%6.3fd\tHOR\tHOR\tLON\tCEN\tINC\t%6.3f\t-HOROFFS\t%8.4fd\t0.0000d\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_name,sat_az,sat_el,size,time,0.0))
 
    j=j+1
    filescd.write("1_%d\t%5.3f\t%d\tPROC_NULL\tPROC_NULL\tTP:MANAGEMENT/FitsZilla\n" % (j,time,j))
-   filelis.write("%d\tOTF\tEUTELSATMAP\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_az,sat_el,size,time,0.0))
+   filelis.write("%d\tOTF\t%sCROSS\t%7.4fd\t%7.4fd\t%6.3fd\t0.000d\tHOR\tHOR\tLAT\tCEN\tINC\t%6.3f\t-HOROFFS\t0.0000d\t%8.4fd\t-RVEL\t0.000000\tBARY\tOP\n" %(j,sat_name,sat_az,sat_el,size,time,0.0))
 
 def usage():
    print "python crossScan.py  size"
 
 
 if __name__ == "__main__": 
-    if len(sys.argv) > 2:  	
        main(sys.argv)
-    else:
-       usage()
+   

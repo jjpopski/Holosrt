@@ -8,6 +8,7 @@ from astropy.time import Time,TimeDelta
 import sys
 from scipy.optimize import curve_fit
 from scipy import asarray as ar,exp
+import argparse
 
 
 #def satpos(tle,time):
@@ -31,19 +32,21 @@ def gaus(x, a, x0, sigma,c0):
 
 
 def main(arg):
+     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+     parser.add_argument("mergedfile",help="Mergedfile Name",type=str)
+     parser.add_argument("-c","--config", help="config file",default='config.txt')
 
-     config_file=open('config.txt')
+     args = parser.parse_args() 
+
+
+     config_file=open(args.config)
      config_parameters=config_file.readlines()
       
      offset_az=float(config_parameters[3])  # since 1710
      offset_el=float(config_parameters[4]) # since 1710
-     name = arg[1] # show an "Open" dialog box and return the path to the selected file
+     name = args.mergedfile # show an "Open" dialog box and return the path to the selected file
      print name
      
-     #times_data=Time(data_time_dati,format='iso')
-     #tle=['EUTELSAT 7A',           \
-     #'1 28187U 04008A   16343.11792845  .00000053  00000-0  00000+0 0  9999' \
-     #'2 28187   0.0625 357.9032 0005290 246.7311 242.1323  1.00270523 46704']
      
      
      my_data = np.genfromtxt(name,skip_header=10,dtype=float)
@@ -51,10 +54,10 @@ def main(arg):
      max_sample=len(my_data[:,0])
      
      el_scan_id_min=30
-     el_scan_id_max=max_sample/2-30
+     el_scan_id_max=max_sample/2-50
      
-     az_scan_id_min=max_sample/2+10
-     az_scan_id_max=max_sample-10
+     az_scan_id_min=max_sample/2+50
+     az_scan_id_max=max_sample-50
      
      print 'elevation',max_sample,el_scan_id_min,el_scan_id_max
      print 'az',max_sample,az_scan_id_min,az_scan_id_max
@@ -95,9 +98,12 @@ def main(arg):
      p.figure(1)
      p.plot(my_data[az_scan_id_min:az_scan_id_max,0],my_data[az_scan_id_min:az_scan_id_max,2],'.')
      p.plot(azimuth_scan_az,gaus(azimuth_scan_az,*popt_az),'-',label='fit')
-     p.savefig('amplitude_AZ')
+     p.ylabel('Amplitude')
+     p.xlabel('Azimuth')
      p.figure(2)
      p.plot(my_data[min_sample:max_sample,2],'.')
+     p.title('Data Stream')
+     
      p.savefig('amplitude')
      p.figure(3)
      p.plot(my_data[min_sample:max_sample,0],my_data[min_sample:max_sample,1],'.')
@@ -105,6 +111,8 @@ def main(arg):
      p.figure(4)
      p.plot(my_data[min_sample:max_sample,1],my_data[min_sample:max_sample,2],'.')
      p.plot(elevation_scan_az,gaus(elevation_scan_az,*popt_el),'-',label='fit')
+     p.title('Amplitude')
+     p.xlabel('Elevation')
      
      p.savefig('amplitude_el')
      p.draw()
@@ -115,8 +123,5 @@ def main(arg):
      
 
 if __name__ == "__main__": 
-    if len(sys.argv) > 1:  	
        main(sys.argv)
-    else:
-       usage(sys.argv)
-
+ 
