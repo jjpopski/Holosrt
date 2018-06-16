@@ -82,6 +82,7 @@ def main(arg):
      popt_el,pcov = curve_fit(gaus,elevation_scan_az,elevation_scan_amplitude,p0=[500000,averel,.2,30.],maxfev=6000,bounds=(0, [1e6, 360., 1.,1e3]))
      print popt_el
      print popt_az
+     p.figure(0)
      p.plot(elevation_scan_az,elevation_scan_amplitude)
      p.show(block=False)
      fit_offset_az= azimuth_commanded-popt_az[1]
@@ -109,7 +110,7 @@ def main(arg):
      p.plot(my_data[min_sample:max_sample,0],my_data[min_sample:max_sample,1],'.')
      p.savefig('az_el')
      p.figure(4)
-     p.plot(my_data[min_sample:max_sample,1],my_data[min_sample:max_sample,2],'.')
+     p.plot(my_data[el_scan_id_min:el_scan_id_max,1],my_data[el_scan_id_min:el_scan_id_max,2],'.')
      p.plot(elevation_scan_az,gaus(elevation_scan_az,*popt_el),'-',label='fit')
      p.title('Amplitude')
      p.xlabel('Elevation')
