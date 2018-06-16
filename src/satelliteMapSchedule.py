@@ -35,7 +35,7 @@ def main(arg):
    
    config_file=open(args.config)
    config_parameters=config_file.readlines()
-   line1=config_parameters[0]
+   line1=config_parameters[0].strip()
    line2=config_parameters[1]
    line3=config_parameters[2]
    offset_az=-float(config_parameters[3])  # since 1710
